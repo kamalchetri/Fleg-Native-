@@ -8,14 +8,14 @@
     "backgroundColor": "#050907",
     "icon": "./assets/icon.png",
     "android": {
-      "package": "in.fleg.native.preview",
+      "package": "in.fleg.nativeapp.preview",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#050907"
       }
     },
     "ios": {
-      "bundleIdentifier": "in.fleg.native.preview"
+      "bundleIdentifier": "in.fleg.nativeapp.preview"
     },
     "plugins": [
       "expo-status-bar",
