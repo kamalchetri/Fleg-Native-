@@ -27,6 +27,13 @@
           "imageWidth": 210,
           "resizeMode": "contain"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow FLEG Native to scan authorized event accreditation QR codes.",
+          "recordAudioAndroid": false
+        }
       ]
     ]
   }
