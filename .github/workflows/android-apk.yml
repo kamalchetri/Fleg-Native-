@@ -12,6 +12,7 @@ on:
       - lib/**
       - app.json
       - package.json
+      - tests/**
       - assets/**
 
 permissions:
@@ -48,6 +49,9 @@ jobs:
 
       - name: Install Expo and React Native dependencies
         run: npm install --no-audit --no-fund
+
+      - name: Android Back navigation regression test
+        run: npm run test:back
 
       - name: TypeScript typecheck
         run: npm run typecheck
