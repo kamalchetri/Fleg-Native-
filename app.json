@@ -2,7 +2,7 @@
   "expo": {
     "name": "FLEG Native UI Preview",
     "slug": "fleg-native-ui-preview",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#050907",
@@ -12,7 +12,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#050907"
-      }
+      },
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 2
     },
     "ios": {
       "bundleIdentifier": "in.fleg.nativeapp.preview"
