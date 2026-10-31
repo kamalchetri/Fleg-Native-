@@ -1,46 +1,43 @@
-# FLEG Native — Complete Frontend UI/UX Preview
+# FLEG Native — Android App
 
-**Target repository:** https://github.com/kamalchetri/Fleg-Native-
+**Repository:** https://github.com/kamalchetri/Fleg-Native- (feature branch `feat/fleg-native-ui`)
 
-This is a **standalone Expo React Native UI starter** for the FLEG Native application—independent of the separate scoring and scanner applications. It uses the real FLEG mark and lockup supplied for this conversation and the approved premium black/neon-lime interface direction. It can be reviewed without a backend, credentials, or access to live registrant data.
+This standalone Expo SDK 57 / React Native app uses FLEG's charcoal/lime design, **Home / Scores / Tournaments / Account** tab bar, and the existing **Fleg-web** Supabase project `zcubdqfzdbwtfcdsntoa` (not the restored backup). The preview opens **Home directly**, including for guests.
 
-## Quick start
+## Implemented Supabase integrations
 
-```bash
+- Persistent email/password authentication with Supabase Auth (sign in, sign up, password recovery email request, sign out).
+- Top-right account button: guests see a login icon; signed-in users see their profile avatar if one is stored, otherwise a placeholder. Dropdown provides My Profile, current role (read from the protected `profiles` record), Settings, Password Recovery, Logout.
+- Account screen: logged-in identity, editable full name, existing avatar URL, member navigation.
+- Protected personal notifications: list and mark as read.
+- Supabase-backed Home, Scores and Tournaments: lists are fetched through ordinary RLS-scoped queries; scores and tournaments can be refreshed, and the app polls updates every 45 seconds.
+- Public match detail pages display actual score data. When a match references a participant not available under RLS, the UI uses a neutral placeholder.
+
+**Security:** App only embeds the public *publishable* Supabase key; no service-role secret. Existing RLS policies, schemas, auth users and records are not modified. Role labels are informational; actual authorization is enforced by Supabase.
+
+## Not yet production-functional
+
+FLEG Native still includes UI-only previews for NSPG medal aggregates, district athlete search, attendance/QR single and batch scanning, scoring write actions, registration forms, certificate issuance, organizer financial workflows, and features under Fitness/Learn/Earn. These screens deliberately do not modify production data until the existing FLEG web business logic, RLS requirements, and backend routines are integrated and verified. Some original NSPG prototype content remains mock data and is marked as such. **Do not use the preview scanner for live entry or venue attendance.**
+
+## Build and install
+
+GitHub Actions workflow `.github/workflows/android-apk.yml` runs dependency install, TypeScript typecheck, Expo Android prebuild, Gradle release APK assembly and uploads a ZIP artifact containing `FLEG-Native-UI-Preview.apk`. Download the successful artifact from the Actions run and install on Android.
+
+Local commands:
+
+```sh
 npm install
-npx expo install --fix
-npm start
+npm run typecheck
+npx expo start
 ```
 
-Open using Expo Go or Android emulator. Screen navigation is local and intended for UI review. Tap **Explore FLEG**, then **Explore as guest** from onboarding, or use the demo sign-in button. **Authentication, scoring, scanner processing, attendance, earnings, and registrations are demonstration-only**. They do not write to any server.
+App package: `in.fleg.nativeapp.preview` — a test package name, not a production app identity.
 
-## Included UI screens (42 routes)
+## Architecture
 
-Splash, onboarding, sign in, sign up, reset password, Home, Discover, Live Scores, My Games, Profile, Fitness, Learn, Earn, Community, NSPG Hub, Sports List, Sport Details, Athlete Search, Athlete Details (six information tabs), Districts, Medals, Fixtures, Match Details, Match Control, Event Details, Tournament Details, Create Event, Organizer Hub, Earnings, Registrations, Accreditation, Kiosk, QR Scanner, Batch Check-in, Scan Result, Notifications, Settings, Help, Digital ID, Statistics, Review Queue, Certificates.
+- `App.tsx`: screens, navigation, auth state and RLS-backed data views.
+- `lib/supabase.ts`: singleton Supabase Auth client with AsyncStorage session persistence and foreground token refresh.
+- `assets/`: FLEG launcher icon, adaptive icon and branding.
+- `SCREEN_MAP.md`: implemented vs preview screen coverage.
 
-Four primary app pillars (Fitness / Learn / Earn / Game) complement the FLEG sporting platform and its separate scanning workflows. Screens are examples, not claims that these modules exist in production. Data is mock-only, with a persistent **UI PREVIEW / SAMPLE DATA** banner on application screens.
-
-## Brand & interaction
-
-- Obsidian canvas `#050907`, surface `#111B15`, lime `#92F716`, restrained neon lighting.
-- Correct FLEG emblem/lockup extracted from the original provided PNG.
-- Rounded touch targets, high-contrast status colors (green, amber, red), primary five-item bottom navigation.
-- App launcher icon and Android adaptive foreground in `assets/`.
-- Handcrafted Android-friendly preview for app screens; no webviews.
-
-## Repository and deployment status
-
-The user-provided `kamalchetri/Fleg-Native-` repository was checked on **31 Oct 2026** and was **empty**, with no branches or commits. This package is therefore an **initial frontend starter**, not a patch to existing source. The GitHub repository was **not changed**. An initial repository commit is needed before branches and pull requests can be created.
-
-This preview's Android application ID (`in.fleg.native.preview`) intentionally avoids any known existing FLEG package. Do not replace production identity, settings, auth, backend security or Expo Updates settings without first inspecting their authoritative configuration.
-
-## Remaining production tasks
-
-- Define the final API contract, role permissions and Supabase RLS-backed services for the new repo.
-- Replace sample data with live queries and server-confirmed results. Do not expose sensitive personal data in public routes.
-- Use actual QR camera SDK with token signature validation; implement duplicate prevention, per-user IN/OUT state, and transaction-level attendance writes on the backend.
-- Integrate native Android back-button behavior, deep links, offline queue, synchronization conflict rules and guarded roles.
-- Add loading/empty/error states, analytics consent, accessibility labels and localization where required.
-- Test Android and iOS after installing Expo dependencies. TypeScript source was syntax checked; no APK build is claimed.
-
-**No commits, deployment, APK build, database write, or changes to any other repository were performed.**
+**Do not merge or deploy as a production application until the remaining workflows have been implemented, authorization audited and the APK tested on real devices.**
