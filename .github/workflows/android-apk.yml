@@ -50,6 +50,18 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive --clean
 
+      - name: Diagnose Expo native module metadata
+        run: |
+          npx expo-modules-autolinking resolve --platform android > /tmp/expo-autolinking.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const x = JSON.parse(fs.readFileSync('/tmp/expo-autolinking.json','utf8'));
+          console.log('EXPO_AUTOLINKED_MODULES', x.modules?.length);
+          (x.modules ?? []).forEach((m,i) => {
+            console.log('AUTOLINK_MODULE', i, m.packageName, m.packageVersion, JSON.stringify((m.projects||[]).map(p=>({name:p.name,publication:p.publication}))));
+          });
+          NODE
+
       - name: Assemble standalone Android release APK
         run: |
           cd android
