@@ -1,29 +1,33 @@
-# FLEG Native — Android App
+# FLEG Native — Role-Aware Android App
 
-**Repository:** https://github.com/kamalchetri/Fleg-Native- (feature branch `feat/fleg-native-ui`)
+**GitHub:** https://github.com/kamalchetri/Fleg-Native- • Work branch `feat/fleg-native-ui`  
+**Backend:** Existing Fleg-web Supabase project `zcubdqfzdbwtfcdsntoa`. The restored backup is not used.
 
-This standalone Expo SDK 57 / React Native app uses FLEG's charcoal/lime design, **Home / Scores / Tournaments / Account** tab bar, and the existing **Fleg-web** Supabase project `zcubdqfzdbwtfcdsntoa` (not the restored backup). The preview opens **Home directly**, including for guests.
+## Runtime
 
-## Implemented Supabase integrations
+- **Launches directly to Home**, including for guests.
+- Bottom tabs: **Home / Scores / Tournaments / Account** on every normal screen.
+- Guest top-right profile icon opens Login. Signed-in accounts show the stored avatar (when present) and account menu: My Profile, verified role, Settings, Password Recovery, Logout.
+- Login, signup, session persistence, password reset request and logout are powered by Supabase Auth.
+- Screens are filtered using `profiles.role`, approval from `organizer_profiles`, and role memberships from `tournament_staff`. A route guard blocks unauthorized screens. **Supabase RLS and server-side authorization remain the security boundary**.
 
-- Persistent email/password authentication with Supabase Auth (sign in, sign up, password recovery email request, sign out).
-- Top-right account button: guests see a login icon; signed-in users see their profile avatar if one is stored, otherwise a placeholder. Dropdown provides My Profile, current role (read from the protected `profiles` record), Settings, Password Recovery, Logout.
-- Account screen: logged-in identity, editable full name, existing avatar URL, member navigation.
-- Protected personal notifications: list and mark as read.
-- Supabase-backed Home, Scores and Tournaments: lists are fetched through ordinary RLS-scoped queries; scores and tournaments can be refreshed, and the app polls updates every 45 seconds.
-- Public match detail pages display actual score data. When a match references a participant not available under RLS, the UI uses a neutral placeholder.
+## Implemented Supabase features
 
-**Security:** App only embeds the public *publishable* Supabase key; no service-role secret. Existing RLS policies, schemas, auth users and records are not modified. Role labels are informational; actual authorization is enforced by Supabase.
+- Real tournament and match feeds, fixtures, results, event details, refresher and score polling (subject to RLS).
+- Personal profile and profile name edit, notification history and marking notifications read.
+- Published workshop discovery, public event forms, approved entrant search, NSPG official programme (15 sports / 17 districts).
+- Logged-in registrations and registration codes, player progress/XP/coins/quests, public league/badges, earned badges, organizer tournaments and forms, payout list, admin registration reviews (read-only).
+- Approved organizers (or otherwise database-authorized users) can **create actual draft tournaments**, with server RLS enforcement.
+- Publicly approved NSPG medal records (no invented rankings).
+- **Admin-only QR camera scanner** via existing `fleg-scanner` and `qr-mobile` Supabase Edge Functions: lookup/preview, validated single and batch IN/OUT, explicit participant identity attestation, backend idempotency, signed photo profile lookup, attendance history, daily report. Camera uses Expo SDK 57 modules.
 
-## Not yet production-functional
+## Important limitations — not production complete
 
-FLEG Native still includes UI-only previews for NSPG medal aggregates, district athlete search, attendance/QR single and batch scanning, scoring write actions, registration forms, certificate issuance, organizer financial workflows, and features under Fitness/Learn/Earn. These screens deliberately do not modify production data until the existing FLEG web business logic, RLS requirements, and backend routines are integrated and verified. Some original NSPG prototype content remains mock data and is marked as such. **Do not use the preview scanner for live entry or venue attendance.**
+The frontend currently **does not** implement end-to-end sport-specific scoring edits, automated paid registrations / payment verification, all organizer admin operations, public full athlete biographies, certified PDF downloads, or complete Fitness / Learn / Earn business workflows. The existing FLEG server contracts must be reused or extended for these actions. Some personal achievements are only available as badges. The current server Edge Function authorizes scanner operations to **admin accounts only**; NSPG staff are not given mobile scanner privileges by the frontend.
 
-## Build and install
+**Do not merge or label this fully functional** until these operations, user-role tests, registration/payment flows and device scans are validated.
 
-GitHub Actions workflow `.github/workflows/android-apk.yml` runs dependency install, TypeScript typecheck, Expo Android prebuild, Gradle release APK assembly and uploads a ZIP artifact containing `FLEG-Native-UI-Preview.apk`. Download the successful artifact from the Actions run and install on Android.
-
-Local commands:
+## Developer
 
 ```sh
 npm install
@@ -31,13 +35,6 @@ npm run typecheck
 npx expo start
 ```
 
-App package: `in.fleg.nativeapp.preview` — a test package name, not a production app identity.
+Android build workflow: `.github/workflows/android-apk.yml`. On success, the run has a downloadable APK artifact. Android application package currently `in.fleg.nativeapp.preview`.
 
-## Architecture
-
-- `App.tsx`: screens, navigation, auth state and RLS-backed data views.
-- `lib/supabase.ts`: singleton Supabase Auth client with AsyncStorage session persistence and foreground token refresh.
-- `assets/`: FLEG launcher icon, adaptive icon and branding.
-- `SCREEN_MAP.md`: implemented vs preview screen coverage.
-
-**Do not merge or deploy as a production application until the remaining workflows have been implemented, authorization audited and the APK tested on real devices.**
+Only the publishable Supabase key is shipped in the client. The backend secret key and administrator database access are not exposed in the APK. The existing database, policies, and Edge Functions are not modified by this branch.
