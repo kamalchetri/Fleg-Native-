@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "FLEG Native UI Preview",
+    "slug": "fleg-native-ui-preview",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#050907",
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "in.fleg.native.preview",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#050907"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "in.fleg.native.preview"
+    },
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#050907",
+          "image": "./assets/adaptive-icon.png",
+          "imageWidth": 210,
+          "resizeMode": "contain"
+        }
+      ]
+    ]
+  }
+}
