@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from 'react';
+import React,{useState,useEffect,useRef} from 'react';
 import {View,Text,TextInput,Image,Pressable,ActivityIndicator,Switch,Alert} from 'react-native';
 import {CameraView,useCameraPermissions} from 'expo-camera';
 import {randomUUID} from 'expo-crypto';
@@ -21,6 +21,7 @@ type Item={code:string;outcome?:string;eligible?:boolean;registration?:{full_nam
 type Props={route:string,scope:AppScope,uid:string|null,onNavigate:(route:string)=>void};
 export default function ScannerFeature({route,scope,uid,onNavigate}:Props){
  const [permission,requestPermission]=useCameraPermissions();
+ const scanLock=useRef(false);
  const [apiReady,setApiReady]=useState(false);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
@@ -38,7 +39,7 @@ export default function ScannerFeature({route,scope,uid,onNavigate}:Props){
  const lookup=route==='kiosk';
  const overview=route==='accreditation';
  const allowed=Boolean(uid&&scope.role==='admin');
- useEffect(()=>{setRaw('');setSingle(null);setProfile(null);setCodes([]);setPreviews([]);setResults([]);setActive(false);setAttested(false);setError('')},[route]);
+ useEffect(()=>{setRaw('');setSingle(null);setProfile(null);setCodes([]);setPreviews([]);setResults([]);setActive(false);setAttested(false);setError('');scanLock.current=false},[route]);
  useEffect(()=>{let mounted=true;if(!allowed){setApiReady(false);return;}
  supabase.functions.invoke('fleg-scanner',{body:{action:'ping'}}).then(({data,error})=>{if(!mounted)return;setApiReady(!error&&data?.ok===true);if(error||data?.error)setError(data?.error||error?.message||'Scanner access unavailable')});
  return()=>{mounted=false}
@@ -101,15 +102,15 @@ export default function ScannerFeature({route,scope,uid,onNavigate}:Props){
  <>
  <View style={{flexDirection:'row',alignItems:'center',gap:12}}><Button text="IN" secondary={direction!=='IN'} onPress={()=>{setDirection('IN');setAttested(false)}}/><Button text="OUT" secondary={direction!=='OUT'} onPress={()=>{setDirection('OUT');setAttested(false)}}/></View>
  {['scanner','batch','scanResult'].includes(route)&&<>
-   {active&&permission?.granted?<View style={{height:285,overflow:'hidden',borderRadius:17,borderWidth:2,borderColor:color.lime}}><CameraView facing="back" style={{flex:1}} barcodeScannerSettings={{barcodeTypes:['qr']}} onBarcodeScanned={({data})=>{if(busy)return;const c=normalized(data);if(!c){setActive(false);setError('This QR does not contain a valid FLEG registration code.');return;}if(batch)addCode(c);else void preview(c);}}/></View>:null}
-   <Button text={active?'Close Camera':'Open QR Camera'} secondary onPress={()=>{if(active){setActive(false);return;}if(permission?.granted){setActive(true);return;}void requestPermission().then(p=>{if(p.granted)setActive(true);else setError('Camera permission is required for QR scanning.')})}}/>
+   {active&&permission?.granted?<View style={{height:285,overflow:'hidden',borderRadius:17,borderWidth:2,borderColor:color.lime}}><CameraView facing="back" style={{flex:1}} barcodeScannerSettings={{barcodeTypes:['qr']}} onBarcodeScanned={({data})=>{if(busy||scanLock.current)return;scanLock.current=true;const c=normalized(data);if(!c){setActive(false);setError('This QR does not contain a valid FLEG registration code.');return;}if(batch)addCode(c);else void preview(c);}}/></View>:null}
+   <Button text={active?'Close Camera':'Open QR Camera'} secondary onPress={()=>{if(active){setActive(false);return;}if(permission?.granted){scanLock.current=false;setActive(true);return;}void requestPermission().then(p=>{if(p.granted){scanLock.current=false;setActive(true)}else setError('Camera permission is required for QR scanning.')})}}/>
  </>}
  <Surface><X>{lookup?'Registration ID':'Manual registration code'}</X><TextInput value={raw} onChangeText={setRaw} autoCapitalize="characters" autoCorrect={false} placeholder="e.g. NOA-2407" placeholderTextColor={color.muted} style={{color:color.white,padding:13,borderWidth:1,borderColor:color.line,borderRadius:12}}/><Button disabled={!apiReady||busy} text={lookup?'Open Verified Profile':batch?'Add to Batch':'Verify Code'} onPress={()=>{const c=normalized(raw);if(!c){setError('Enter a valid FLEG registration code.');return;}setRaw('');if(lookup)void showProfile(c);else if(batch)addCode(c);else void preview(c)}}/></Surface>
  {lookup&&profile&&<Surface><X large>{String(profile.name||'Registrant')}</X><X>{String(profile.code||'')}</X><X dim>{String(profile.discipline||'')} • {String(profile.registrationStatus||'')}</X>{profile.photoUrl&&<Image source={{uri:profile.photoUrl}} style={{height:125,width:125,borderRadius:12}}/>}<X dim>Presence: {String(profile.current?.attendance||'Unknown')}</X><X dim>Last IN: {String(profile.current?.lastIn||'—')}</X><X dim>Last OUT: {String(profile.current?.lastOut||'—')}</X><X dim>Movement history: {profile.movements?.length||0} • Visits: {profile.visits?.length||0} • Medals: {profile.medals?.length||0} • Certificates: {profile.certificates?.length||0}</X></Surface>}
  {batch&&<Surface><X>Batch: {codes.length}/10</X>{codes.map(c=><Pressable key={c} onPress={()=>{setCodes(v=>v.filter(x=>x!==c));setPreviews([]);setAttested(false)}}><X>{c}   × Remove</X></Pressable>)}<Button text={busy?'Verifying…':'Verify All'} disabled={busy||!apiReady||!codes.length} onPress={()=>{void verifyBatch()}}/></Surface>}
  {(batch?previews:single?[single]:[]).map((p,i)=><Surface key={p.code||i}><X large>{p.code}</X><X>{String(p.registration?.full_name||p.name||p.outcome||'Not found')}</X><X dim>{String(p.discipline||'')}</X><Text style={{color:p.eligible?color.lime:color.red,fontWeight:'800'}}>{p.outcome} • {p.eligible?'Eligible':'Not eligible'}</Text><X dim>Current status: {String(p.current?.status||p.current?.attendance||'Unknown')}</X></Surface>)}
  {!lookup&&(batch?previews.length>0:single?.outcome==='MATCHED')&&<Surface><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><X>Identity checked and verified in person</X><Switch value={attested} onValueChange={setAttested} trackColor={{true:color.lime,false:color.line}}/></View><X dim>Only confirm after physically checking the person and the registration. A matched code alone does not guarantee entry.</X><Button text={busy?'Recording…':'Record '+direction} disabled={!attested||busy||(batch?previews:single?[single]:[]).some(p=>!p.eligible||p.outcome!=='MATCHED')} onPress={()=>{Alert.alert('Confirm '+direction,'Record this attendance action in FLEG for '+(batch?codes.length+' people':'this participant')+'?', [{text:'Cancel',style:'cancel'},{text:'Confirm',onPress:()=>{void move()}}])}}/></Surface>}
- {results.length>0&&<Surface><X large>Server Results</X>{results.map((r,i)=><View key={String(i)} style={{gap:3,paddingVertical:7,borderBottomColor:color.line,borderBottomWidth:1}}><X>{String(r.code||'Registrant')}</X><Text style={{color:['OK','SUCCESS','CHECKED_IN','CHECKED_OUT','IN','OUT'].includes(String(r.outcome||'').toUpperCase())?color.lime:color.amber}}>{String(r.outcome||r.status||r.reason||'Response received')}</Text></View>)}<Button text="Next Scan" onPress={()=>{setCodes([]);setPreviews([]);setSingle(null);setResults([]);setAttested(false);setActive(true)}}/></Surface>}
+ {results.length>0&&<Surface><X large>Server Results</X>{results.map((r,i)=><View key={String(i)} style={{gap:3,paddingVertical:7,borderBottomColor:color.line,borderBottomWidth:1}}><X>{String(r.code||'Registrant')}</X><Text style={{color:['OK','SUCCESS','CHECKED_IN','CHECKED_OUT','IN','OUT'].includes(String(r.outcome||'').toUpperCase())?color.lime:color.amber}}>{String(r.outcome||r.status||r.reason||'Response received')}</Text></View>)}<Button text="Next Scan" onPress={()=>{setCodes([]);setPreviews([]);setSingle(null);setResults([]);setAttested(false);scanLock.current=false;setActive(true)}}/></Surface>}
  {busy&&<ActivityIndicator size="large" color={color.lime}/>}
  </>
  }
