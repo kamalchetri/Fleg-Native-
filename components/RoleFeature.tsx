@@ -3,6 +3,7 @@ import {View,Text,TextInput,Pressable,ActivityIndicator,Alert} from 'react-nativ
 import {MaterialCommunityIcons} from '@expo/vector-icons';
 import {supabase} from '../lib/supabase';
 import {AppScope,roleLabel} from '../lib/access';
+import ScannerFeature from './ScannerFeature';
 
 const colors={bg:'#050907',card:'#111B15',lime:'#92F716',line:'#243D2C',white:'#F7FAF6',muted:'#9AA99D',red:'#FF5964',amber:'#FDBA48'};
 type Props={route:string,scope:AppScope,uid:string|null,onNavigate:(route:string)=>void};
@@ -104,7 +105,7 @@ async function createDraft(){
  }catch(e:any){Alert.alert('Could not create event',e?.message||'Permission or validation failed.')}
  finally{setSaving(false)}
 }
-if(['accreditation','scanner','batch','scanResult','kiosk'].includes(route))return <Panel><MaterialCommunityIcons name="shield-lock-outline" size={46} color={colors.amber}/><Txt big>Secure scanner integration required</Txt><Txt dim>The existing NSPG check-in RPC is not authorized for regular mobile sessions. Scanner validation, IN/OUT, duplicates and attendance writes must go through the existing protected FLEG backend. No simulated check-in is accepted as a real scan.</Txt></Panel>;
+if(['accreditation','scanner','batch','scanResult','kiosk'].includes(route))return <ScannerFeature route={route} scope={scope} uid={uid} onNavigate={onNavigate}/>;
 if(route==='athlete')return <Panel><Txt big>Athlete profile</Txt><Txt dim>Searchable public competition entries and verified personal athlete profiles require a supported identity link. The app will not show a synthetic ID or another person’s private record.</Txt><Action title="Search Public Participants" onPress={()=>onNavigate('search')}/></Panel>;
 if(route==='createEvent')return <View style={{gap:12}}>
  <Txt big>Create Tournament Draft</Txt><Txt dim>Creates a real draft in your FLEG organizer account. Publishing and paid registration still use the approved organizer workflow.</Txt>
