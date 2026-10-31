@@ -12,7 +12,7 @@ export type AppScope = {
 };
 export const GUEST_SCOPE: AppScope = { role:'guest',signedIn:false,organizerApproved:false,staffRoles:[] };
 const PUBLIC_ROUTES = new Set([
-  'home','live','tournament','discover','match','event','nspg','sports',
+  'home','live','tournament','profile','discover','match','event','nspg','sports',
   'districts','fixtures','medals','fitness','learn','earn','community',
   'help','login','signup','forgot','splash','onboarding'
 ]);
