@@ -30,7 +30,7 @@ export function canAccessRoute(route:string, scope:AppScope):boolean {
   if(!scope.signedIn) return false;
   if(MEMBER_ROUTES.has(route)) return true;
   const admin=scope.role==='admin';
-  const organizer=admin||scope.organizerApproved||scope.staffRoles.some(r=>r==='owner'||r==='co_organizer');
+  const organizer=admin||scope.role==='organizer'||scope.organizerApproved||scope.staffRoles.some(r=>r==='owner'||r==='co_organizer');
   const official=admin||organizer||scope.role==='referee'||scope.staffRoles.some(r=>r==='referee'||r==='scorekeeper');
   if(route==='review') return admin; // Existing form-submission policies permit admin review, not arbitrary organizer review.
   if(route==='games') return official;
