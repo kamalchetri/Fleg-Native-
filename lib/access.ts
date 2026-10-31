@@ -21,7 +21,7 @@ const MEMBER_ROUTES = new Set([
   'registrations','certificates'
 ]);
 const ORGANIZER_ROUTES = new Set([
-  'organizer','createEvent','earnings','review','statistics','games'
+  'organizer','createEvent','earnings','statistics'
 ]);
 const SCORER_ROUTES = new Set(['matchControl']);
 const NSPG_ROUTES = new Set(['accreditation','scanner','batch','scanResult','kiosk']);
@@ -32,7 +32,8 @@ export function canAccessRoute(route:string, scope:AppScope):boolean {
   const admin=scope.role==='admin';
   const organizer=admin||scope.organizerApproved||scope.staffRoles.some(r=>r==='owner'||r==='co_organizer');
   const official=admin||organizer||scope.role==='referee'||scope.staffRoles.some(r=>r==='referee'||r==='scorekeeper');
-  const nspg=admin||scope.role==='nspg_lead'||scope.role==='nspg_staff';
+  if(route==='review') return admin; // Existing form-submission policies permit admin review, not arbitrary organizer review.
+  if(route==='games') return official;
   if(ORGANIZER_ROUTES.has(route)) return organizer;
   if(SCORER_ROUTES.has(route)) return official;
   if(NSPG_ROUTES.has(route)) return admin; // Scanner API verifies DB admin role; NSPG staff are not API-authorized.
