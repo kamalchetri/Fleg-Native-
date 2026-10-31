@@ -52,6 +52,7 @@ export function accountLinks(scope:AppScope) {
   const links = [
     {route:'profile',label:'My Profile',icon:'account-circle-outline'},
     {route:'registrations',label:'My Registrations',icon:'clipboard-account-outline'},
+    {route:'idcard',label:'My Digital ID',icon:'card-account-details-outline'},
     {route:'notifications',label:'Notifications',icon:'bell-outline'},
     {route:'certificates',label:'Certificates',icon:'certificate-outline'},
     {route:'settings',label:'Settings',icon:'cog-outline'},
