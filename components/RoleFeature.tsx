@@ -21,7 +21,7 @@ const [error,setError]=useState('');
 const [search,setSearch]=useState('');
 const [reload,setReload]=useState(0);
 const [eventTitle,setEventTitle]=useState('');
-const [eventSport,setEventSport]=useState('');
+const [eventSport,setEventSport]=useState('football');
 const [eventCity,setEventCity]=useState('');
 const [saving,setSaving]=useState(false);
 const [progress,setProgress]=useState<AnyRow|null>(null);
@@ -93,14 +93,16 @@ useEffect(()=>{
  return()=>{active=false};
 },[route,uid,reload,search,scope.role]);
 async function createDraft(){
- if(!uid||!(scope.organizerApproved||scope.role==='admin'||scope.staffRoles.includes('owner'))){Alert.alert('Not authorized','Only approved or authorized organizers can create events.');return}
- if(eventTitle.trim().length<3||eventSport.trim().length<2){Alert.alert('Missing details','Enter a tournament name and sport.');return}
+ if(!uid||!(scope.organizerApproved||scope.role==='organizer'||scope.role==='admin'||scope.staffRoles.includes('owner'))){Alert.alert('Not authorized','Only approved or authorized organizers can create events.');return}
+ const sportKey=eventSport.trim().toLowerCase().replace(/[\s-]+/g,'_');
+ const allowedSports=['futsal','football','pickleball','basketball','badminton','darts','archery','athletics','boxing','lawn_tennis','pencak_silat','sepaktakraw','table_tennis','taekwondo','volleyball','wrestling','wushu','para'];
+ if(eventTitle.trim().length<3||!allowedSports.includes(sportKey)){Alert.alert('Invalid details','Enter a tournament title and a supported sport, e.g. football, basketball, badminton.');return}
  setSaving(true);
  try{
   const slug=(eventTitle.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)+'-'+Date.now().toString(36));
-  const {error}=await supabase.from('tournaments').insert({name:eventTitle.trim(),sport:eventSport.trim(),city:eventCity.trim()||null,slug,organizer_id:uid,status:'draft',visibility:'private'});
+  const {error}=await supabase.from('tournaments').insert({name:eventTitle.trim(),sport:sportKey,city:eventCity.trim()||null,slug,organizer_id:uid,status:'draft',visibility:'private'});
   if(error)throw error;
-  setEventTitle('');setEventSport('');setEventCity('');setReload(x=>x+1);
+  setEventTitle('');setEventSport('football');setEventCity('');setReload(x=>x+1);
   Alert.alert('Draft saved','Your draft tournament was created in FLEG.');
  }catch(e:any){Alert.alert('Could not create event',e?.message||'Permission or validation failed.')}
  finally{setSaving(false)}
@@ -109,7 +111,7 @@ if(['accreditation','scanner','batch','scanResult','kiosk'].includes(route))retu
 if(route==='athlete')return <Panel><Txt big>Athlete profile</Txt><Txt dim>Searchable public competition entries and verified personal athlete profiles require a supported identity link. The app will not show a synthetic ID or another person’s private record.</Txt><Action title="Search Public Participants" onPress={()=>onNavigate('search')}/></Panel>;
 if(route==='createEvent')return <View style={{gap:12}}>
  <Txt big>Create Tournament Draft</Txt><Txt dim>Creates a real draft in your FLEG organizer account. Publishing and paid registration still use the approved organizer workflow.</Txt>
- {([['Tournament name',eventTitle,setEventTitle],['Sport',eventSport,setEventSport],['City',eventCity,setEventCity]] as [string,string,(x:string)=>void][]).map(([label,value,change])=><TextInput key={label} placeholder={label} placeholderTextColor={colors.muted} value={value} onChangeText={change} style={{backgroundColor:colors.card,padding:15,borderRadius:12,borderColor:colors.line,borderWidth:1,color:colors.white}}/>)}
+ {([['Tournament name',eventTitle,setEventTitle],['Sport (football, basketball, badminton...)',eventSport,setEventSport],['City',eventCity,setEventCity]] as [string,string,(x:string)=>void][]).map(([label,value,change])=><TextInput key={label} placeholder={label} placeholderTextColor={colors.muted} value={value} onChangeText={change} style={{backgroundColor:colors.card,padding:15,borderRadius:12,borderColor:colors.line,borderWidth:1,color:colors.white}}/>)}
  <Action title={saving?'Saving...':'Save Draft'} onPress={()=>{void createDraft()}} disabled={saving}/>
  <Txt big>My Tournaments</Txt>
  {rows.map(r=><Panel key={r.id}><Txt>{asText(r.name)}</Txt><Txt dim>{asText(r.status)}</Txt></Panel>)}
