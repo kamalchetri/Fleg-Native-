@@ -35,7 +35,7 @@ export function canAccessRoute(route:string, scope:AppScope):boolean {
   const nspg=admin||scope.role==='nspg_lead'||scope.role==='nspg_staff';
   if(ORGANIZER_ROUTES.has(route)) return organizer;
   if(SCORER_ROUTES.has(route)) return official;
-  if(NSPG_ROUTES.has(route)) return nspg;
+  if(NSPG_ROUTES.has(route)) return admin; // Scanner API verifies DB admin role; NSPG staff are not API-authorized.
   return false;
 }
 export function navigationForRole(scope:AppScope) {
